@@ -1,18 +1,64 @@
 import numpy as np
+import sys
 
-A_file = open("001_start.txt", "r")
-B_file = open("111_start.txt", "r")
+def properInput():
+    A_file, B_file = 0, 0
+    #Need 3 additional command line arguments (2 inputs and one write file)
+    if len(sys.argv) != 4:
+        print("Improper amount of arguments, program terminating")
+        sys.exit()
+    #check file extension
+    if sys.argv[1].endswith('.txt') == False or sys.argv[2].endswith('.txt')==False or (sys.argv[3].endswith('.txt')==False):
+        print("Not proper file extension, make sure to include .txt")
+        sys.exit()
+    #see if the two input files exist
+    try:
+        A_file = open(sys.argv[1], "r")
+        B_file = open(sys.argv[2], "r")
+    except FileNotFoundError:
+        print("Input file does not exist, program terminating")
+        sys.exit()
+    concatFile = sys.argv[3]
+    #return all the information if it is proper format
+    return A_file, B_file, concatFile
+    
+#check input file contents
+def checkFileInfo(description):
+    #Need 5 elements for correct formal description
+    if len(description) != 5:
+        print("Improper amount of information in file")
+        return False
+    #Check how many arguments are in alphabet
+    try:
+        alphabetElements = list(map(int, description[1].split()))
+        print(alphabetElements)
+    except ValueError:
+        print("Alphabet contains characters")
+        return False
+    #check if value is [0,1,-1], if not, it is not proper alphabet
+    for x in alphabetElements:
+        if x != 1 and x != 0 and x != -1:
+            print("Wrong number value, only [1,0,-1] accepted as alphabet elements")
+            return False
+    
+    return True
 
-#Need to error check the files in this method
-# def checkErrors(description):
 
+A_file, B_file, concatFile = properInput()
 
 def readFile(fileName):
     fileElements = fileName.readlines()
     formalDescription = [x.strip() for x in fileElements]
+    print(formalDescription)
 
-    #call error checking method in this file
-
+    #error check the file to make sure it is a proper DFA/NFA
+    if checkFileInfo(formalDescription) == False:
+        print("File errors, program terminating")
+        A_file.close()
+        B_file.close()        
+        sys.exit()
+    
+    
     #Separate each portion of the formal description
     listOfStates = formalDescription[0].split(sep=" ")
     alphabet = formalDescription[1].split(sep=" ")
@@ -96,4 +142,4 @@ def writeOutput(fileName):
     outputFile.writelines(concatAcceptStates)
     outputFile.close()
 
-writeOutput("testOutput.txt")
+writeOutput(concatFile)
