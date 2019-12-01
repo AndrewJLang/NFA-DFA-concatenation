@@ -1,6 +1,9 @@
 import numpy as np
 import sys
 
+#Andrew Lang and Alex Weininger
+
+#Check that the command line arguments are correct
 def properInput():
     A_file, B_file = 0, 0
     #Need 3 additional command line arguments (2 inputs and one write file)
@@ -22,25 +25,44 @@ def properInput():
     #return all the information if it is proper format
     return A_file, B_file, concatFile
     
-#check input file contents
+#check input file contents to see if correct
 def checkFileInfo(description):
     #Need 5 elements for correct formal description
     if len(description) != 5:
         print("Improper amount of information in file")
         return False
-    #Check how many arguments are in alphabet
+    #Check how many arguments are in alphabet, only accepts integer transitions (not a and b)
     try:
         alphabetElements = list(map(int, description[1].split()))
-        print(alphabetElements)
     except ValueError:
         print("Alphabet contains characters")
         return False
+
     #check if value is [0,1,-1], if not, it is not proper alphabet
     for x in alphabetElements:
         if x != 1 and x != 0 and x != -1:
             print("Wrong number value, only [1,0,-1] accepted as alphabet elements")
             return False
+
+    return True
+
+def checkTransitions(stateList, transitionList, alphabetList):
+    splitTransitions = []
+    #Format transitions so they can be checked
+    for x in range(len(transitionList)):
+            splitTransitions.append(transitionList[x].split(sep=" "))
+            try:
+                splitTransitions[len(splitTransitions)-1].remove('')
+            except ValueError:
+                continue
     
+    #Check that the transitions are proper
+    for x in range(len(splitTransitions)):
+        if len(splitTransitions[x]) != 3:
+            return False
+        #Ensure that the first two elements are states in the state list, and the transition value is in the alphabet
+        if splitTransitions[x][0] not in stateList or splitTransitions[x][1] not in stateList or splitTransitions[x][2] not in alphabetList:
+            return False
     return True
 
 
@@ -49,21 +71,34 @@ A_file, B_file, concatFile = properInput()
 def readFile(fileName):
     fileElements = fileName.readlines()
     formalDescription = [x.strip() for x in fileElements]
-    print(formalDescription)
+    # print(formalDescription)
 
     #error check the file to make sure it is a proper DFA/NFA
     if checkFileInfo(formalDescription) == False:
         print("File errors, program terminating")
         A_file.close()
-        B_file.close()        
+        B_file.close()
         sys.exit()
-    
     
     #Separate each portion of the formal description
     listOfStates = formalDescription[0].split(sep=" ")
     alphabet = formalDescription[1].split(sep=" ")
     transitions = formalDescription[2].split(sep=",")
     startState = formalDescription[3].split(sep=" ")
+
+    if checkTransitions(listOfStates, transitions, alphabet) == False:
+        print("Improper element in transition, program terminating")
+        A_file.close()
+        B_file.close()
+        sys.exit()
+
+    #check if there is more than 1 initial state, exit if so
+    if len(startState) != 1:
+        print("More than one start state in the file, program terminating")
+        A_file.close()
+        B_file.close()
+        sys.exit()
+    
     acceptStates = formalDescription[4].split(sep=" ")
 
     return listOfStates, alphabet, transitions, startState, acceptStates
@@ -126,6 +161,7 @@ concatTransitions = newTransitions(A_transitions, B_transitions, A_acceptStates,
 concatStartState = concatStartStates(A_startState, B_startState)
 concatAcceptStates = concatAcceptStates(A_acceptStates, B_acceptStates)
 
+#Write the new concatenation to an output terminal
 def writeOutput(fileName):
     outputFile = open(fileName, "w")
     for x in range(len(concatStates)):
