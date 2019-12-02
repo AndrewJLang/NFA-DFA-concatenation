@@ -1,0 +1,5 @@
+A_Q0 A_Q1 A_Q2 A_Q3 A_Q4 A_Q5 B_Q0 B_Q1 B_Q2 
+0 1 -1 
+(A_Q0 A_Q1 -1) (A_Q1 A_Q2 0) (A_Q2 A_Q1 0) (A_Q0 A_Q3 -1) (A_Q3 A_Q4 0) (A_Q4 A_Q5 0) (A_Q5 A_Q3 0) (B_Q0 B_Q0 0) (B_Q0 B_Q1 1) (B_Q1 B_Q1 0) (B_Q1 B_Q2 1) (B_Q2 B_Q2 0) (B_Q2 B_Q2 1) (A_Q1 B_Q0 -1) (A_Q3 B_Q0 -1) 
+A_Q0
+B_Q2

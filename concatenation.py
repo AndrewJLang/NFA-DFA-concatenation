@@ -1,4 +1,3 @@
-import numpy as np
 import sys
 
 #Andrew Lang and Alex Weininger
@@ -46,6 +45,7 @@ def checkFileInfo(description):
 
     return True
 
+#Transform the transitions so overlapping states between A and B are labeled accordingly
 def checkTransitions(stateList, transitionList, alphabetList):
     splitTransitions = []
     #Format transitions so they can be checked
@@ -63,11 +63,12 @@ def checkTransitions(stateList, transitionList, alphabetList):
         #Ensure that the first two elements are states in the state list, and the transition value is in the alphabet
         if splitTransitions[x][0] not in stateList or splitTransitions[x][1] not in stateList or splitTransitions[x][2] not in alphabetList:
             return False
-    return True
+    return splitTransitions, True
 
 
 A_file, B_file, concatFile = properInput()
 
+#Read in the file and split the information up to be in separate lists
 def readFile(fileName):
     fileElements = fileName.readlines()
     formalDescription = [x.strip() for x in fileElements]
@@ -85,8 +86,9 @@ def readFile(fileName):
     alphabet = formalDescription[1].split(sep=" ")
     transitions = formalDescription[2].split(sep=",")
     startState = formalDescription[3].split(sep=" ")
-
-    if checkTransitions(listOfStates, transitions, alphabet) == False:
+    
+    updatedTransitions, tempCheck = checkTransitions(listOfStates, transitions, alphabet)
+    if tempCheck == False:
         print("Improper element in transition, program terminating")
         A_file.close()
         B_file.close()
@@ -101,10 +103,10 @@ def readFile(fileName):
     
     acceptStates = formalDescription[4].split(sep=" ")
 
-    return listOfStates, alphabet, transitions, startState, acceptStates
+    return listOfStates, alphabet, transitions, startState, acceptStates, updatedTransitions
 
-A_states, A_alphabet, A_transitions, A_startState, A_acceptStates = readFile(A_file)
-B_states, B_alphabet, B_transitions, B_startState, B_acceptStates = readFile(B_file)
+A_states, A_alphabet, A_transitions, A_startState, A_acceptStates, A_splitTransitions = readFile(A_file)
+B_states, B_alphabet, B_transitions, B_startState, B_acceptStates, B_splitTransitions = readFile(B_file)
 
 #Close the files once we have read all the information
 A_file.close()
@@ -113,23 +115,39 @@ B_file.close()
 #Define all our final output lists
 concatStates, concatAlphabet, concatTransitions, concatStartState, concatAcceptStates = [], [], [], [], []
 
-#fix duplicate named states
+#fix duplicate named states from different files
 def adjustStates(A_states, B_states):
     unionStates = A_states + B_states
     unionStates = list(dict.fromkeys(unionStates))
-    changed = False
 
     if len(unionStates) == (len(A_states) + len(B_states)):
-        return A_states, B_states, changed
+        return A_states, B_states
     else:
-        changed = True
         for x in range(len(A_states)):
             A_states[x] = f'A_{A_states[x]}'
         for x in range(len(B_states)):
             B_states[x] = f'B_{B_states[x]}'
-        return A_states, B_states, changed
+        return A_states, B_states
 
-A_states, B_states, _ = adjustStates(A_states, B_states)
+A_states, B_states = adjustStates(A_states, B_states)
+
+#adjust transitions so they show proper states
+def adjustTransitions(transitions, A_states):
+    for x in range(len(transitions)):
+        tempArr = transitions[x].split(sep=" ")
+        if tempArr[0] == '':
+            tempArr.pop(0)
+        if A_states == True:
+            tempArr[0] = f'A_{tempArr[0]}'
+            tempArr[1] = f'A_{tempArr[1]}'
+        else:
+            tempArr[0] = f'B_{tempArr[0]}'
+            tempArr[1] = f'B_{tempArr[1]}'
+        transitions[x] = tempArr[0] + " " + tempArr[1] + " " + tempArr[2]
+    return transitions
+
+A_transitions = adjustTransitions(A_transitions, A_states=True)
+B_transitions = adjustTransitions(B_transitions, A_states=False)
 
 #join all the states
 def concatAllStates(A_states, B_states):
@@ -144,16 +162,16 @@ def concatAlphabet(A_alph, B_alph):
 def newTransitions(A_transitions, B_transitions, A_acceptStates, B_startState):
     transitionTable = A_transitions + B_transitions
     for x in range(len(A_acceptStates)):
-        transitionTable.append(f"{A_acceptStates[x]} {B_startState[0]} -1")
+        transitionTable.append(f"A_{A_acceptStates[x]} B_{B_startState[0]} -1")
     return transitionTable
 
 #Fix the accept states for the final concatenated language
 def concatAcceptStates(A_acceptStates, B_acceptStates):
-    return B_acceptStates
+    return "B_" + B_acceptStates[0]
 
 #Get the start state for the final language
 def concatStartStates(A_startState, B_startState):
-    return A_startState
+    return "A_" + A_startState[0]
 
 concatStates = concatAllStates(A_states, B_states)
 concatAlphabet = concatAlphabet(A_alphabet, B_alphabet)
